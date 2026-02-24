@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { supabaseAdmin } from "@/lib/supabase-admin";
+import { getSupabaseAdmin } from "@/lib/supabase-admin";
 
 /**
  * GET /api/cards/[shortId] — Fetch a card by its short ID
@@ -9,6 +9,14 @@ export async function GET(
     { params }: { params: { shortId: string } }
 ) {
     try {
+        const supabaseAdmin = getSupabaseAdmin();
+        if (!supabaseAdmin) {
+            return NextResponse.json(
+                { error: "Database not configured" },
+                { status: 503 }
+            );
+        }
+
         const { shortId } = params;
 
         const { data, error } = await supabaseAdmin

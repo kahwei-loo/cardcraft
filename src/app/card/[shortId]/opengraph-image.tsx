@@ -1,5 +1,5 @@
 import { ImageResponse } from "next/og";
-import { supabaseAdmin } from "@/lib/supabase-admin";
+import { getSupabaseAdmin } from "@/lib/supabase-admin";
 import { getThemeById } from "@/lib/themes";
 import { DEFAULT_CARD_CONFIG } from "@/types/card";
 
@@ -16,6 +16,9 @@ export default async function Image({ params }: { params: { shortId: string } })
     let accentColor = "#FFD700";
 
     try {
+        const supabaseAdmin = getSupabaseAdmin();
+        if (!supabaseAdmin) throw new Error("not configured");
+
         const { data } = await supabaseAdmin
             .from("cards")
             .select("config")

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { nanoid } from "nanoid";
-import { supabaseAdmin } from "@/lib/supabase-admin";
+import { getSupabaseAdmin } from "@/lib/supabase-admin";
 
 const MAX_STRING_LEN = 500;
 const VALID_MODES = new Set(["web", "ai"]);
@@ -47,6 +47,14 @@ function validateConfig(raw: unknown): { valid: boolean; config?: Record<string,
  */
 export async function POST(request: Request) {
     try {
+        const supabaseAdmin = getSupabaseAdmin();
+        if (!supabaseAdmin) {
+            return NextResponse.json(
+                { error: "Database not configured" },
+                { status: 503 }
+            );
+        }
+
         const body = await request.json();
         const result = validateConfig(body.config);
 

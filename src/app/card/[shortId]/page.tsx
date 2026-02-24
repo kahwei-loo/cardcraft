@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { Metadata } from "next";
-import { supabaseAdmin } from "@/lib/supabase-admin";
+import { getSupabaseAdmin } from "@/lib/supabase-admin";
 import { DEFAULT_CARD_CONFIG, CardConfig } from "@/types/card";
 import CardViewer from "./CardViewer";
 
@@ -15,6 +15,9 @@ type CardResult =
 
 async function getCard(shortId: string): Promise<CardResult> {
     try {
+        const supabaseAdmin = getSupabaseAdmin();
+        if (!supabaseAdmin) return { type: "error" };
+
         const { data, error } = await supabaseAdmin
             .from("cards")
             .select("*")
