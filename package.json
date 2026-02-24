@@ -1,5 +1,5 @@
 {
-  "name": "holiday-card-generator",
+  "name": "festive-ecard-studio",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -23,7 +23,6 @@
     "react": "^18",
     "react-dom": "^18",
     "replicate": "^0.28.1",
-    "stripe": "^14.25.0",
     "tailwind-merge": "^2.2.1"
   },
   "devDependencies": {
