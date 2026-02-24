@@ -11,6 +11,7 @@ import LoveBloom from "./LoveBloom";
 import PartyPop from "./PartyPop";
 import GoldenHarvest from "./GoldenHarvest";
 import LanternGlow from "./LanternGlow";
+import PostcardFront from "./PostcardTemplate";
 
 interface TemplateRendererProps {
     config: CardConfig;
@@ -18,7 +19,7 @@ interface TemplateRendererProps {
     showEffects?: boolean;
 }
 
-const TEMPLATE_MAP: Record<TemplateId, React.ComponentType<TemplateContentProps>> = {
+const TEMPLATE_MAP: Partial<Record<TemplateId, React.ComponentType<TemplateContentProps>>> = {
     "spring-festival": SpringFestival,
     "winter-wonder": WinterWonder,
     "love-bloom": LoveBloom,
@@ -77,7 +78,7 @@ export default function TemplateRenderer({
     const cssVars = theme ? themeToCSS(theme) : {};
 
     const TemplateComponent = config.templateId
-        ? TEMPLATE_MAP[config.templateId]
+        ? TEMPLATE_MAP[config.templateId] ?? null
         : null;
 
     // Build dynamic font style from theme
@@ -88,17 +89,32 @@ export default function TemplateRenderer({
           } as React.CSSProperties
         : {};
 
+    const isPostcard = config.outputFormat === "postcard";
+    const aspectClass = isPostcard ? "aspect-[16/9]" : "aspect-[3/4]";
+
     return (
         <div
-            className={`relative w-full aspect-[3/4] overflow-hidden rounded-2xl card-shadow ${className}`}
+            className={`relative w-full ${aspectClass} overflow-hidden rounded-2xl card-shadow ${className}`}
             style={{ ...(cssVars as React.CSSProperties), ...fontStyle }}
         >
             {/* Background gradient */}
             <div className="absolute inset-0 bg-card-gradient" />
 
             {/* Pattern overlay */}
-            {theme && (
+            {theme && !config.aiGeneratedUrl && (
                 <div className={`absolute inset-0 opacity-10 ${theme.patternClass}`} />
+            )}
+
+            {/* AI-generated image background */}
+            {config.aiGeneratedUrl && (
+                <div className="absolute inset-0 z-[1]">
+                    <img
+                        src={config.aiGeneratedUrl}
+                        alt="AI generated background"
+                        className="w-full h-full object-cover"
+                    />
+                    <div className="absolute inset-0 bg-black/30" />
+                </div>
             )}
 
             {/* Top highlight — simulates light reflection on glossy card */}
@@ -168,17 +184,25 @@ export default function TemplateRenderer({
             )}
 
             {/* Template content */}
-            <div className="relative z-20 flex flex-col items-center justify-center h-full p-8 text-center card-fonts">
+            <div className={`relative z-20 flex flex-col items-center justify-center h-full ${isPostcard ? "p-5" : "p-8"} text-center card-fonts`}>
                 <AnimatePresence mode="wait">
                     <motion.div
-                        key={config.templateId ?? "default"}
+                        key={`${config.templateId ?? "default"}-${config.outputFormat}`}
                         initial={{ opacity: 0, scale: 0.96 }}
                         animate={{ opacity: 1, scale: 1 }}
                         exit={{ opacity: 0, scale: 0.96 }}
                         transition={{ duration: 0.3, ease: "easeInOut" }}
                         className="w-full"
                     >
-                        {TemplateComponent ? (
+                        {isPostcard ? (
+                            <PostcardFront
+                                greeting={config.greeting}
+                                subGreeting={config.subGreeting}
+                                senderName={config.senderName}
+                                recipientName={config.recipientName}
+                                seed={config.seed}
+                            />
+                        ) : TemplateComponent ? (
                             <TemplateComponent
                                 greeting={config.greeting}
                                 subGreeting={config.subGreeting}

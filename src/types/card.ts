@@ -10,11 +10,36 @@ export type HolidayType =
     | "valentines"
     | "birthday"
     | "thanksgiving"
-    | "eid"
-    | "diwali"
     | "general";
 
 export type CardMode = "web" | "ai";
+
+// ============================================================
+// AI Style Types
+// ============================================================
+
+export type AIStyleId =
+    | "manga"
+    | "watercolor"
+    | "oil-painting"
+    | "anime"
+    | "sketch"
+    | "pop-art";
+
+export interface AIStyleConfig {
+    id: AIStyleId;
+    name: string;
+    prompt: string;
+    icon: string;
+    description: string;
+    strength: number;
+}
+
+// ============================================================
+// Output Format Types
+// ============================================================
+
+export type OutputFormat = "greeting-card" | "postcard";
 
 export interface ThemeColors {
     primary: string;
@@ -48,7 +73,8 @@ export type TemplateId =
     | "love-bloom"
     | "party-pop"
     | "golden-harvest"
-    | "lantern-glow";
+    | "lantern-glow"
+    | "postcard";
 
 export type EffectType =
     | "confetti"
@@ -76,6 +102,7 @@ export interface CardTemplate {
 
 export interface CardConfig {
     mode: CardMode;
+    outputFormat: OutputFormat;
     templateId: TemplateId | null;
     themeId: string;
     greeting: string;
@@ -86,10 +113,12 @@ export interface CardConfig {
     seed: number;
     customImageUrl: string | null;
     aiGeneratedUrl: string | null;
+    aiStyleId: AIStyleId | null;
 }
 
 export const DEFAULT_CARD_CONFIG: CardConfig = {
     mode: "web",
+    outputFormat: "greeting-card",
     templateId: null,
     themeId: "cny-red-gold",
     greeting: "",
@@ -100,6 +129,7 @@ export const DEFAULT_CARD_CONFIG: CardConfig = {
     seed: Date.now(),
     customImageUrl: null,
     aiGeneratedUrl: null,
+    aiStyleId: null,
 };
 
 // ============================================================

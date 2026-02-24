@@ -36,4 +36,4 @@ next-env.d.ts
 .serena/
 
 # screenshots from testing
-*.png
+*.test.png

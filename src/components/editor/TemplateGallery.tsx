@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo } from "react";
 import { motion } from "framer-motion";
 import { TEMPLATES } from "@/data/templates";
 import { CardTemplate, HolidayType, TemplateId } from "@/types/card";
@@ -21,6 +22,28 @@ export default function TemplateGallery({
         ? TEMPLATES.filter((t) => t.holiday === holidayFilter)
         : TEMPLATES;
 
+    // Pre-compute theme lookups once per holiday filter change instead of per-template
+    const themesByHoliday = useMemo(() => {
+        const map = new Map<HolidayType, ReturnType<typeof getThemesByHoliday>>();
+        for (const t of templates) {
+            if (!map.has(t.holiday)) map.set(t.holiday, getThemesByHoliday(t.holiday));
+        }
+        return map;
+    }, [templates]);
+
+    if (templates.length === 0) {
+        return (
+            <div className="space-y-3">
+                <h3 className="text-sm font-semibold text-ink/70 uppercase tracking-wider">
+                    Card Template
+                </h3>
+                <p className="text-sm text-ink/50 text-center py-8">
+                    No templates available for this occasion yet.
+                </p>
+            </div>
+        );
+    }
+
     return (
         <div className="space-y-3">
             <h3 className="text-sm font-semibold text-ink/70 uppercase tracking-wider">
@@ -29,8 +52,7 @@ export default function TemplateGallery({
 
             <div className="grid grid-cols-2 gap-3">
                 {templates.map((template) => {
-                    const themes = getThemesByHoliday(template.holiday);
-                    const previewTheme = themes[0];
+                    const previewTheme = themesByHoliday.get(template.holiday)?.[0];
 
                     return (
                         <motion.button
@@ -87,13 +109,14 @@ export default function TemplateGallery({
 }
 
 function getTemplateEmoji(id: TemplateId): string {
-    const map: Record<TemplateId, string> = {
+    const map: Partial<Record<TemplateId, string>> = {
         "spring-festival": "🧧",
         "winter-wonder": "❄️",
         "love-bloom": "💕",
         "party-pop": "🎉",
         "golden-harvest": "🍁",
         "lantern-glow": "🏮",
+        "postcard": "📬",
     };
     return map[id] ?? "✨";
 }

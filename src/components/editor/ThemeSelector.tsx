@@ -17,8 +17,6 @@ const HOLIDAY_LABELS: Record<HolidayType, string> = {
     valentines: "Valentine's",
     birthday: "Birthday",
     thanksgiving: "Thanksgiving",
-    eid: "Eid",
-    diwali: "Diwali",
     general: "General",
 };
 

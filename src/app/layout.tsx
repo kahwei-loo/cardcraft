@@ -3,8 +3,12 @@ import { ToastProvider } from "@/components/ui/toast";
 import "./globals.css";
 
 export const metadata: Metadata = {
+    metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "https://ecard.studio"),
     title: "Festive E-Card Studio",
     description: "Create magical animated greeting cards for every celebration",
+    icons: {
+        icon: "/favicon.svg",
+    },
 };
 
 const FONT_URL = [
