@@ -1,10 +1,19 @@
 "use client";
 
-import { motion, useInView } from "framer-motion";
-import { useRef } from "react";
+import {
+    motion,
+    useInView,
+    useMotionValue,
+    useScroll,
+    useTransform,
+    AnimatePresence,
+} from "framer-motion";
+import { useRef, useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { Sparkles, Palette, Share2, ArrowRight, Wand2 } from "lucide-react";
 import FloatingIcons from "@/components/FloatingIcons";
+import TemplateRenderer from "@/components/templates/TemplateRenderer";
+import { CardConfig, DEFAULT_CARD_CONFIG } from "@/types/card";
 
 const heroContainerVariants = {
     hidden: {},
@@ -56,26 +65,54 @@ const FEATURES = [
     },
 ];
 
-const SAMPLE_CARDS = [
+const SAMPLE_CARDS: { config: CardConfig; label: string }[] = [
     {
-        gradient: "from-red-700 to-amber-600",
-        emoji: "🧧",
         label: "Chinese New Year",
+        config: {
+            ...DEFAULT_CARD_CONFIG,
+            templateId: "spring-festival",
+            themeId: "cny-red-gold",
+            greeting: "新年快乐",
+            subGreeting: "Wishing You Prosperity",
+            senderName: "",
+            effects: ["none"],
+        },
     },
     {
-        gradient: "from-emerald-700 to-red-800",
-        emoji: "🎄",
         label: "Christmas",
+        config: {
+            ...DEFAULT_CARD_CONFIG,
+            templateId: "winter-wonder",
+            themeId: "xmas-classic",
+            greeting: "Merry Christmas",
+            subGreeting: "Joy, Peace & Love",
+            senderName: "",
+            effects: ["none"],
+        },
     },
     {
-        gradient: "from-pink-500 to-rose-600",
-        emoji: "💕",
         label: "Valentine's",
+        config: {
+            ...DEFAULT_CARD_CONFIG,
+            templateId: "love-bloom",
+            themeId: "valentine-rose",
+            greeting: "With All My Love",
+            subGreeting: "You Are My Everything",
+            senderName: "",
+            effects: ["none"],
+        },
     },
     {
-        gradient: "from-amber-500 to-orange-600",
-        emoji: "🎂",
         label: "Birthday",
+        config: {
+            ...DEFAULT_CARD_CONFIG,
+            templateId: "party-pop",
+            themeId: "birthday-party",
+            greeting: "Happy Birthday!",
+            subGreeting: "Make a Wish",
+            senderName: "",
+            effects: ["none"],
+        },
     },
 ];
 
@@ -85,17 +122,97 @@ export default function Home() {
     const featuresInView = useInView(featuresRef, { once: true, margin: "-60px" });
     const galleryInView = useInView(galleryRef, { once: true, margin: "-60px" });
 
+    // Task 1.2: Scroll-driven parallax transforms
+    const { scrollYProgress } = useScroll();
+    const heroY = useTransform(scrollYProgress, [0, 0.3], [0, -60]);
+    const heroOpacity = useTransform(scrollYProgress, [0, 0.25], [1, 0]);
+
+    const { scrollYProgress: featuresProgress } = useScroll({
+        target: featuresRef,
+        offset: ["start end", "end start"],
+    });
+    const featuresY = useTransform(featuresProgress, [0, 0.4], [40, 0]);
+    const featuresOpacity = useTransform(featuresProgress, [0, 0.3], [0, 1]);
+
+    const { scrollYProgress: galleryProgress } = useScroll({
+        target: galleryRef,
+        offset: ["start end", "end start"],
+    });
+    const galleryY = useTransform(galleryProgress, [0, 0.4], [50, 0]);
+    const galleryScale = useTransform(galleryProgress, [0, 0.4], [0.95, 1]);
+
+    // Task 1.4: Hero visual anchor — cycling card preview
+    const [heroCardIndex, setHeroCardIndex] = useState(0);
+
+    useEffect(() => {
+        const timer = setInterval(() => {
+            setHeroCardIndex((i) => (i + 1) % SAMPLE_CARDS.length);
+        }, 5000);
+        return () => clearInterval(timer);
+    }, []);
+
+    // Task 3.2A: Magnetic CTA button
+    const ctaRef = useRef<HTMLDivElement>(null);
+    const ctaX = useMotionValue(0);
+    const ctaY = useMotionValue(0);
+    const ctaTransformX = useTransform(ctaX, [-150, 150], [-6, 6]);
+    const ctaTransformY = useTransform(ctaY, [-150, 150], [-4, 4]);
+
+    const handleCtaMouseMove = useCallback((e: React.MouseEvent) => {
+        const rect = ctaRef.current?.getBoundingClientRect();
+        if (!rect) return;
+        ctaX.set(e.clientX - rect.left - rect.width / 2);
+        ctaY.set(e.clientY - rect.top - rect.height / 2);
+    }, [ctaX, ctaY]);
+
+    const handleCtaMouseLeave = useCallback(() => {
+        ctaX.set(0);
+        ctaY.set(0);
+    }, [ctaX, ctaY]);
+
+    // Task 3.2B: Gallery card 3D tilt
+    const handleCardMouseMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+        const rect = e.currentTarget.getBoundingClientRect();
+        const x = (e.clientX - rect.left) / rect.width - 0.5;
+        const y = (e.clientY - rect.top) / rect.height - 0.5;
+        e.currentTarget.style.transform = `perspective(600px) rotateY(${x * 10}deg) rotateX(${-y * 10}deg) translateY(-6px) scale(1.02)`;
+    }, []);
+
+    const handleCardMouseLeave = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+        e.currentTarget.style.transform = "";
+    }, []);
+
     return (
         <main className="flex min-h-screen flex-col items-center relative overflow-hidden">
             <FloatingIcons />
 
             {/* Hero Section */}
             <motion.section
-                className="z-10 w-full max-w-3xl text-center pt-20 pb-16 px-4 space-y-8"
+                className="z-10 w-full max-w-3xl text-center pt-20 pb-16 px-4 space-y-8 relative"
                 variants={heroContainerVariants}
                 initial="hidden"
                 animate="visible"
+                style={{ y: heroY, opacity: heroOpacity }}
             >
+                {/* Hero background card */}
+                <div className="absolute inset-0 flex items-center justify-center pointer-events-none overflow-hidden">
+                    <AnimatePresence mode="wait">
+                        <motion.div
+                            key={heroCardIndex}
+                            className="w-56 sm:w-64 opacity-[0.12] blur-[2px] -rotate-6 translate-y-4"
+                            initial={{ opacity: 0, scale: 0.95 }}
+                            animate={{ opacity: 0.12, scale: 1 }}
+                            exit={{ opacity: 0, scale: 1.05 }}
+                            transition={{ duration: 1.2 }}
+                        >
+                            <TemplateRenderer
+                                config={SAMPLE_CARDS[heroCardIndex].config}
+                                showEffects={false}
+                            />
+                        </motion.div>
+                    </AnimatePresence>
+                </div>
+
                 <motion.div variants={heroItemVariants}>
                     <span className="inline-flex items-center gap-1.5 text-sm text-berry font-medium bg-berry/10 px-3 py-1 rounded-full mb-4">
                         <Sparkles size={14} />
@@ -121,13 +238,21 @@ export default function Home() {
                 </motion.p>
 
                 <motion.div variants={heroItemVariants} className="space-y-3">
-                    <Link
-                        href="/create"
-                        className="inline-flex items-center gap-2 bg-berry hover:bg-berry/90 text-white font-semibold px-8 py-4 rounded-xl text-lg shadow-lg hover:shadow-xl transition-all hover:-translate-y-0.5"
+                    <motion.div
+                        ref={ctaRef}
+                        style={{ x: ctaTransformX, y: ctaTransformY }}
+                        onMouseMove={handleCtaMouseMove}
+                        onMouseLeave={handleCtaMouseLeave}
+                        className="inline-block"
                     >
-                        Create Your Card
-                        <ArrowRight size={20} />
-                    </Link>
+                        <Link
+                            href="/create"
+                            className="inline-flex items-center gap-2 bg-berry hover:bg-berry/90 text-white font-semibold px-8 py-4 rounded-xl text-lg shadow-lg hover:shadow-xl transition-all hover:-translate-y-0.5"
+                        >
+                            Create Your Card
+                            <ArrowRight size={20} />
+                        </Link>
+                    </motion.div>
                     <p className="text-sm text-ink/60">
                         or{" "}
                         <Link
@@ -147,6 +272,7 @@ export default function Home() {
                 variants={cardContainerVariants}
                 initial="hidden"
                 animate={featuresInView ? "visible" : "hidden"}
+                style={{ y: featuresY, opacity: featuresOpacity }}
             >
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
                     {FEATURES.map((feature) => (
@@ -179,6 +305,7 @@ export default function Home() {
                 variants={cardContainerVariants}
                 initial="hidden"
                 animate={galleryInView ? "visible" : "hidden"}
+                style={{ y: galleryY, scale: galleryScale }}
             >
                 <motion.h2
                     className="text-center text-sm font-semibold text-ink/50 uppercase tracking-wider mb-6"
@@ -192,16 +319,20 @@ export default function Home() {
                             key={card.label}
                             className="group block"
                             variants={cardItemVariants}
-                            whileHover={{ y: -6, scale: 1.02 }}
+                            onMouseMove={handleCardMouseMove}
+                            onMouseLeave={handleCardMouseLeave}
+                            style={{ transition: "transform 0.2s ease-out" }}
                         >
                             <Link href="/create">
-                                <div
-                                    className={`aspect-[3/4] rounded-xl bg-gradient-to-br ${card.gradient} flex flex-col items-center justify-center shadow-md group-hover:shadow-xl transition-shadow`}
-                                >
-                                    <span className="text-4xl mb-2">{card.emoji}</span>
-                                    <span className="text-white/90 text-sm font-display font-semibold drop-shadow">
-                                        {card.label}
-                                    </span>
+                                <div className="aspect-[3/4] relative rounded-2xl overflow-hidden shadow-md group-hover:shadow-xl transition-shadow">
+                                    <div className="pointer-events-none">
+                                        <TemplateRenderer config={card.config} showEffects={false} />
+                                    </div>
+                                    <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent p-3 rounded-b-2xl">
+                                        <span className="text-white/90 text-sm font-display font-semibold drop-shadow">
+                                            {card.label}
+                                        </span>
+                                    </div>
                                 </div>
                             </Link>
                         </motion.div>

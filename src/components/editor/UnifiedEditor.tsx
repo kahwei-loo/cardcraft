@@ -3,7 +3,7 @@
 import { useState, useCallback, useRef, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
-import { ChevronLeft, ChevronRight, Share2, Shuffle, RotateCcw } from "lucide-react";
+import { ChevronLeft, ChevronRight, Share2, Shuffle, RotateCcw, Eye, EyeOff } from "lucide-react";
 import {
     CardConfig,
     DEFAULT_CARD_CONFIG,
@@ -28,6 +28,7 @@ import EffectSelector from "./EffectSelector";
 import StyleSelector from "./StyleSelector";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/toast";
+import { fireSuccessConfetti } from "@/lib/confetti";
 import { cn } from "@/lib/utils";
 
 const STEPS = [
@@ -49,6 +50,8 @@ export default function UnifiedEditor() {
     const [shareUrl, setShareUrl] = useState("");
     const [saving, setSaving] = useState(false);
     const [showBack, setShowBack] = useState(false);
+    const [mobilePreviewOpen, setMobilePreviewOpen] = useState(false);
+    const [stepDirection, setStepDirection] = useState(0);
     const [holiday, setHoliday] = useState<HolidayType>("chinese-new-year");
 
     // Initialize greeting from data instead of hardcoding
@@ -137,6 +140,7 @@ export default function UnifiedEditor() {
             setShareUrl(url);
             setShareOpen(true);
             toast("Card saved!", "success");
+            fireSuccessConfetti();
         } catch (err) {
             toast("Could not save card. Using current page link instead.", "error");
             setShareUrl(window.location.href);
@@ -168,9 +172,13 @@ export default function UnifiedEditor() {
             toast(warning, "error");
             return;
         }
+        setStepDirection(1);
         setCurrentStep((s) => Math.min(s + 1, STEPS.length - 1));
     };
-    const goBack = () => setCurrentStep((s) => Math.max(s - 1, 0));
+    const goBack = () => {
+        setStepDirection(-1);
+        setCurrentStep((s) => Math.max(s - 1, 0));
+    };
     const isLastStep = currentStep === STEPS.length - 1;
 
     // ── Render Step Content ──
@@ -298,9 +306,35 @@ export default function UnifiedEditor() {
                 </div>
             </div>
 
+            {/* Mobile mini-preview toggle */}
+            <div className="lg:hidden sticky top-0 z-20 bg-parchment/95 backdrop-blur-sm border-b border-ink/5 px-4 py-2 mb-4 -mx-4">
+                <button
+                    onClick={() => setMobilePreviewOpen(v => !v)}
+                    className="flex items-center gap-1.5 text-xs text-ink/50 hover:text-ink/70 transition-colors"
+                >
+                    {mobilePreviewOpen ? <EyeOff size={14} /> : <Eye size={14} />}
+                    {mobilePreviewOpen ? "Hide Preview" : "Show Preview"}
+                </button>
+                <AnimatePresence>
+                    {mobilePreviewOpen && (
+                        <motion.div
+                            initial={{ height: 0, opacity: 0 }}
+                            animate={{ height: "auto", opacity: 1 }}
+                            exit={{ height: 0, opacity: 0 }}
+                            transition={{ duration: 0.25 }}
+                            className="overflow-hidden"
+                        >
+                            <div className="w-48 mx-auto py-3">
+                                <TemplateRenderer config={config} showEffects={false} />
+                            </div>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
+            </div>
+
             <div className="flex flex-col lg:flex-row gap-8">
                 {/* Left: Controls Panel */}
-                <div className="w-full lg:w-[400px] order-2 lg:order-1">
+                <div className="w-full lg:w-[400px] order-1 lg:order-1">
                     <div className="bg-white/50 backdrop-blur-sm rounded-2xl p-5 border border-ink/5 shadow-sm">
                         {/* Step Title */}
                         <div className="flex items-center justify-between mb-5">
@@ -316,9 +350,9 @@ export default function UnifiedEditor() {
                         <AnimatePresence mode="wait">
                             <motion.div
                                 key={STEPS[currentStep].id}
-                                initial={{ opacity: 0, x: 20 }}
+                                initial={{ opacity: 0, x: stepDirection * 30 }}
                                 animate={{ opacity: 1, x: 0 }}
-                                exit={{ opacity: 0, x: -20 }}
+                                exit={{ opacity: 0, x: stepDirection * -30 }}
                                 transition={{ duration: 0.2 }}
                             >
                                 {renderStepContent()}
@@ -356,7 +390,7 @@ export default function UnifiedEditor() {
                 </div>
 
                 {/* Right: Card Preview */}
-                <div className="flex-1 order-1 lg:order-2">
+                <div className="flex-1 order-2 lg:order-2 hidden lg:block">
                     <div className="sticky top-8 space-y-4">
                         <div className="flex items-center justify-between">
                             <p className="text-xs text-ink/50 uppercase tracking-wider font-semibold">

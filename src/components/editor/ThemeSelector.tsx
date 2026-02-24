@@ -49,37 +49,47 @@ export default function ThemeSelector({
                         {HOLIDAY_LABELS[holiday as HolidayType]}
                     </p>
                     <div className="flex flex-wrap gap-2">
-                        {holidayThemes.map((theme) => (
-                            <motion.button
-                                key={theme.id}
-                                className={cn(
-                                    "relative w-10 h-10 rounded-lg border-2 transition-all overflow-hidden",
-                                    selectedThemeId === theme.id
-                                        ? "border-ink ring-2 ring-ink/20 scale-110"
-                                        : "border-transparent hover:border-ink/30"
-                                )}
-                                onClick={() => onSelect(theme)}
-                                whileHover={{ scale: 1.1 }}
-                                whileTap={{ scale: 0.95 }}
-                                title={theme.name}
-                            >
-                                <div
-                                    className="absolute inset-0"
-                                    style={{
-                                        background: `linear-gradient(135deg, ${theme.colors.primary} 0%, ${theme.colors.secondary} 100%)`,
-                                    }}
-                                />
-                                {selectedThemeId === theme.id && (
-                                    <motion.div
-                                        className="absolute inset-0 flex items-center justify-center"
-                                        initial={{ scale: 0 }}
-                                        animate={{ scale: 1 }}
-                                    >
-                                        <span className="text-white text-sm drop-shadow">✓</span>
-                                    </motion.div>
-                                )}
-                            </motion.button>
-                        ))}
+                        {holidayThemes.map((theme) => {
+                            const isSelected = selectedThemeId === theme.id;
+                            return (
+                                <motion.button
+                                    key={theme.id}
+                                    className={cn(
+                                        "relative w-10 h-10 rounded-lg border-2 transition-all overflow-visible",
+                                        isSelected
+                                            ? "border-transparent scale-110"
+                                            : "border-transparent hover:border-ink/30"
+                                    )}
+                                    onClick={() => onSelect(theme)}
+                                    whileHover={{ scale: 1.1 }}
+                                    whileTap={{ scale: 0.95 }}
+                                    title={theme.name}
+                                >
+                                    {isSelected && (
+                                        <motion.div
+                                            layoutId="theme-ring"
+                                            className="absolute inset-0 rounded-lg ring-2 ring-berry ring-offset-2"
+                                            transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                                        />
+                                    )}
+                                    <div
+                                        className="absolute inset-0 rounded-lg overflow-hidden"
+                                        style={{
+                                            background: `linear-gradient(135deg, ${theme.colors.primary} 0%, ${theme.colors.secondary} 100%)`,
+                                        }}
+                                    />
+                                    {isSelected && (
+                                        <motion.div
+                                            className="absolute inset-0 flex items-center justify-center"
+                                            initial={{ scale: 0 }}
+                                            animate={{ scale: 1 }}
+                                        >
+                                            <span className="text-white text-sm drop-shadow">✓</span>
+                                        </motion.div>
+                                    )}
+                                </motion.button>
+                            );
+                        })}
                     </div>
                 </div>
             ))}

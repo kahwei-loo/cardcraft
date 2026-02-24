@@ -4,13 +4,13 @@ import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import { ArrowLeft, Share2, RotateCcw, Wand2 } from "lucide-react";
 import { useState, useRef, useEffect, useCallback } from "react";
-import confetti from "canvas-confetti";
 import { CardConfig } from "@/types/card";
 import { getThemeById } from "@/lib/themes";
 import { getStyleById } from "@/data/ai-styles";
 import TemplateRenderer from "@/components/templates/TemplateRenderer";
 import { PostcardBack } from "@/components/templates/PostcardTemplate";
 import SharePanel from "@/components/share/SharePanel";
+import { fireConfetti } from "@/lib/confetti";
 import { Button } from "@/components/ui/button";
 
 interface CardViewerProps {
@@ -95,18 +95,6 @@ function useTypingAnimation(text: string, enabled: boolean, speed = 50) {
     }, [text, enabled, speed]);
 
     return { displayText, isDone };
-}
-
-// ── Confetti burst ──
-
-function fireConfetti(themeColors?: string[]) {
-    const colors = themeColors ?? ["#C2185B", "#D4AF37", "#2E7D32"];
-    confetti({
-        particleCount: 150,
-        spread: 70,
-        origin: { y: 0.6 },
-        colors,
-    });
 }
 
 export default function CardViewer({ config, shortId }: CardViewerProps) {

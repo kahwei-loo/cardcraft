@@ -7,6 +7,7 @@ import { QRCodeSVG } from "qrcode.react";
 import { toPng } from "html-to-image";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/toast";
+import { fireSuccessConfetti } from "@/lib/confetti";
 import { cn } from "@/lib/utils";
 
 interface SharePanelProps {
@@ -83,6 +84,7 @@ export default function SharePanel({
             await navigator.clipboard.writeText(cardUrl);
             setCopied(true);
             toast("Link copied!", "success");
+            fireSuccessConfetti();
             setTimeout(() => setCopied(false), 2000);
         } catch {
             // Fallback for older browsers
@@ -94,6 +96,7 @@ export default function SharePanel({
             document.body.removeChild(textarea);
             setCopied(true);
             toast("Link copied!", "success");
+            fireSuccessConfetti();
             setTimeout(() => setCopied(false), 2000);
         }
     }, [cardUrl, toast]);
